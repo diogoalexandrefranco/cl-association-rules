@@ -6,7 +6,7 @@
            :license "MIT"
            :serial t
            :components ((:file "package")
-                        (:file "cl-association-rules")))
+                        (:file "apriori")))
 
 (defsystem #:cl-association-rules-tests
            :name "cl-association-rules-tests"
