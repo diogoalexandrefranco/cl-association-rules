@@ -2,6 +2,16 @@
 
 (print "Project is running")
 
+(defun set-equal-p (set-1 set-2 test)
+  "Returns t if two sets of elements are equal"
+  (unless (= (length set-1) (length set-2))
+    (return-from set-equal-p nil))
+
+  (loop for el in set-1
+    do (unless (member el set-2 :test test)
+        (return-from set-equal-p nil)))
+  t)
+
 (defun get-all-items (dataset test)
   "From a dataset, return the unique items as a list."
   (let ((item-set))
@@ -43,11 +53,34 @@
 
         (values frequent-items non-frequent-items)))))
 
-
-
-(defun generate-candidates (frequent-items non-frequent-items)
+(defun generate-candidates (frequent-items non-frequent-items all-items test)
   "Generates the next candidate set, from the previous frequent and
-  non-frequent itemsets.")
+  non-frequent itemsets."
+  (labels ((%is-set-contained (small big)
+            (loop for el in small
+              do (unless (member el big :test test)
+                  (return-from %is-set-contained nil)))
+            t)
+           (%can-be-pruned (non-frequent-items new-candidate)
+            (loop for non-frequent in non-frequent-items
+              do (when (%is-set-contained non-frequent new-candidate)
+                       (return-from %can-be-pruned t)))
+            nil))
+
+    (let ((candidates))
+      (loop for f-item in frequent-items
+        do (loop for item in all-items
+                 for new-candidate = (append f-item item)
+            do (unless (or
+                        (member (first item) f-item :test test) ;; item already in the set
+                        (member new-candidate candidates :test #'(lambda (set-1 set-2)
+                                                                  (set-equal-p set-1
+                                                                               set-2
+                                                                               test))) ;; new candidate already in candidates
+                        (%can-be-pruned non-frequent-items new-candidate)) ;; new candidate can be pruned
+                (push new-candidate candidates))))
+
+      (nreverse candidates))))
 
 (defun apriori (dataset &key (support 0.17) (confidence 0.68) (test #'equalp))
   "Calculates the association rules in the dataset using the apriori
@@ -69,7 +102,10 @@
       (get-frequent-items items min-support dataset test)
 
       (loop while (not (null frequent-items))
-        for candidates = (generate-candidates frequent-items non-frequent-items)
+        for candidates = (generate-candidates frequent-items
+                                              non-frequent-items
+                                              items
+                                              test)
         do (multiple-value-setq (frequent-items non-frequent-items)
             (get-frequent-items candidates min-support dataset test)))
       frequent-items)))
