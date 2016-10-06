@@ -38,11 +38,11 @@ nickname "rules".
                    (2 3)
                    (3 4)
                    (2 4)))
-((3) => (2). Support is 3 and confidence is 3/4.
- (4 1) => (2). Support is 2 and confidence is 1.
- (4) => (2). Support is 4 and confidence is 4/5.
- (1) => (2). Support is 3 and confidence is 1.
- (3) => (4). Support is 3 and confidence is 3/4.)
+((3) => (2). Support is 3/7 and confidence is 3/4.
+ (4 1) => (2). Support is 2/7 and confidence is 1.
+ (4) => (2). Support is 4/7 and confidence is 4/5.
+ (1) => (2). Support is 3/7 and confidence is 1.
+ (3) => (4). Support is 3/7 and confidence is 3/4.)
 ```
 
 ## API
