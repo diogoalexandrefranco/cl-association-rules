@@ -18,6 +18,6 @@
                           (rule-posttuple struct)
                           (rule-support struct)
                           (rule-confidence struct))
-                  (format stream "New empty rule.")))))
+                  (format stream "New empty rule.~%")))))
 
   pretuple posttuple support confidence)
