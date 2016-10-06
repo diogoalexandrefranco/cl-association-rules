@@ -22,7 +22,7 @@
 
     (mapcar #'list (nreverse item-set))))
 
-(defun get-frequent-items (candidate-set min-support dataset test)
+(defun get-frequent-items (candidate-set min-support dataset test frequent-items-hash)
   "From a candidate set and support threshold, return
   the items that are frequent and non-frequent in the
   dataset."
@@ -48,7 +48,9 @@
         (maphash #'(lambda (k v)
                     (if (< v min-support)
                         (push k non-frequent-items)
-                        (push k frequent-items)))
+                        (progn
+                          (setf (gethash k frequent-items-hash) v)
+                          (push k frequent-items))))
                   count)
 
         (values frequent-items non-frequent-items)))))
@@ -80,7 +82,39 @@
                         (%can-be-pruned non-frequent-items new-candidate)) ;; new candidate can be pruned
                 (push new-candidate candidates))))
 
-      (nreverse candidates))))
+      candidates)))
+
+(defun generate-rules (frequent-itemsets min-confidence test)
+  "From the frequent itemsets found by apriori,
+  generate association rules for a given min-confidence."
+  (labels ((subsets (set &optional (so-far nil) (output nil))
+            (unless set
+              (unless (null so-far) (push so-far output))
+              (return-from subsets output))
+
+            (setf output (subsets (rest set) (cons (first set) so-far) output))
+            (setf output (subsets (rest set) so-far output)))
+
+           (set-diff (total subset test)
+            (if (null total)
+                nil
+                (if (member (first total) subset :test test)
+                    (set-diff (rest total) subset test)
+                    (cons (first total) (set-diff (rest total) subset test))))))
+
+    (maphash #'(lambda (itemset support)
+                (loop for subset in (subsets itemset)
+                      for set-diff = (set-diff itemset subset test)
+                      for confidence = (or
+                                        (ignore-errors
+                                          (/ support
+                                             (gethash set-diff frequent-itemsets)))
+                                        0)
+                  do (when (>= confidence min-confidence)
+                      (format t "rule found: ~a => ~a. Support is ~a and confidence is ~a.~%"
+                        set-diff subset support confidence))))
+
+      frequent-itemsets)))
 
 (defun apriori (dataset &key (support 0.17) (confidence 0.68) (test #'equalp))
   "Calculates the association rules in the dataset using the apriori
@@ -96,16 +130,20 @@
    (check-type support number "A number")
    (check-type confidence number "A number")
    (let* ((items (get-all-items dataset test))
-          (min-support (ceiling (* (length items) support))))
+          (min-support (ceiling (* (length dataset) support)))
+          (frequent-itemsets (make-hash-table :test #'equalp)))
 
+    (format t "min support: ~a~%" min-support)
     (multiple-value-bind (frequent-items non-frequent-items)
-      (get-frequent-items items min-support dataset test)
+      (get-frequent-items items min-support dataset test frequent-itemsets)
 
       (loop while (not (null frequent-items))
         for candidates = (generate-candidates frequent-items
                                               non-frequent-items
                                               items
                                               test)
-        do (multiple-value-setq (frequent-items non-frequent-items)
-            (get-frequent-items candidates min-support dataset test)))
-      frequent-items)))
+        do
+           (multiple-value-setq (frequent-items non-frequent-items)
+            (get-frequent-items candidates min-support dataset test frequent-itemsets)))
+
+      (generate-rules frequent-itemsets confidence test))))
