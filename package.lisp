@@ -6,5 +6,8 @@
   (:shadow)
   (:export
     #:apriori
-    ;; #:cenas
-    ))
+    #:make-rule
+    #:rule-pretuple
+    #:rule-posttuple
+    #:rule-support
+    #:rule-confidence))

@@ -13,7 +13,7 @@
                         (rule-posttuple struct)
                         (rule-support struct)
                         (rule-confidence struct))
-                  (format stream "~a => ~a. Support is ~a and confidence is ~a."
+                  (format stream "~a => ~a. Support is ~a and confidence is ~a.~%"
                           (rule-pretuple struct)
                           (rule-posttuple struct)
                           (rule-support struct)

@@ -1,5 +1,6 @@
 # cl-association-rules
-An implementation of the apriori algorithm to mine association rules in Common Lisp.
+This project aims to implement the most well known strategies and utilities when
+mining association rules. For now, only the apriori algorithm is implemented.
 It works at least on sbcl, ecl, ccl, abcl and clisp.
 
 * [How do i use it?](#how-do-i-use-it)
@@ -22,37 +23,58 @@ And it's all up and running. To run the tests do:
 ```
 Please report if any tests fail in your Common Lisp implementation.
 
+To make it easier to write, the cl-association-rules package also has the
+nickname "rules".
+
 ## Example
 ```lisp
 > (ql:quickload :cl-association-rules)
 (:CL-ASSOCIATION-RULES)  
 
-> (use-package :cl-association-rules)
-T  
-
-> (defparameter *num* (parse-number "-3.1e3"))
-*NUM* ;; -3100.0  
-
-> (format-number *num* :precision 3 :decimal-separator "." :order-separator ",")
-"-3,100.000"
+> (rules:apriori '((1 2 3 4) ;; each of these lines is a transaction
+                   (1 2 4)
+                   (1 2)
+                   (2 3 4)
+                   (2 3)
+                   (3 4)
+                   (2 4)))
+((3) => (2). Support is 3 and confidence is 3/4.
+ (4 1) => (2). Support is 2 and confidence is 1.
+ (4) => (2). Support is 4 and confidence is 4/5.
+ (1) => (2). Support is 3 and confidence is 1.
+ (3) => (4). Support is 3 and confidence is 3/4.)
 ```
 
 ## API
-#### (parse-number number-str &key (decimal-separator #\\.) (order-separator nil))
-parse-number returns a number from a string, without using the reader (CL has
-parse-integer but no equivalent for other number types). It accepts integers,
-floats, fractional and scientific notations. It also accepts both chars and
-one character strings for the separators. This method may signal *parse-error*.
+#### (apriori dataset &key (support 0.17)
+(confidence 0.68) (test #'equalp))
+Apriori calculates the association rules in "dataset" using the [apriori
+algorithm](https://en.wikipedia.org/wiki/Apriori_algorithm). Expects a dataset of the form
+  ((1 2 3 4)
+   (3 2 7 9)
+   (9)
+   (2 3 8)
+   (2 0)),
+ where each line is a transaction. You can also costumize the support (defaults to 0.17), the confidence (defaults to 0.68) and the equality operator (defaults to the lisp "equalp" function).
+ The output is a list of mined rules, where each rule is an instance of a struct with fields posttuple, pretuple, support and confidence.
+ This method may signal *type-error*.
 ```lisp
-(parse-number "-3.1e2") ;; -310.0
-(parse-number "1 234,9" :decimal-separator "," :order-separator " ") ;; 1234.9
-```
+> (defvar *mined-rules* (rules:apriori '((1 2 3 4)
+                                         (1 2 3 7)
+                                         (1 9)
+                                         (2 10 15 4)
+                                         (1 3 4 11)
+                                         (15 3 1 20))))
+*MINED-RULES* ;; ((2 1) => (3). Support is 1/3 and confidence is 1.
+                  (3 2) => (1). Support is 1/3 and confidence is 1.
+                  (1) => (3). Support is 2/3 and confidence is 4/5.
+                  (3) => (1). Support is 2/3 and confidence is 1.)
 
-#### (format-number number &key (precision 0) (decimal-separator ".") (order-separator ",")
-format-number returns a string from a number. It's possible to set the precision
-(decimals), and the separators as chars or strings of length one.
-```lisp
-(format-number 1234.326 :precision 2 :decimal-separator "," :order-separator " ") ;; "1 234,33"
+> (rules:rule-pretuple (first *MINED-RULES*))
+(2 1) ;; accessing member "pretuple" of the rule struct. Other members are
+"posttuple", "support" and "confidence".
+
+
 ```
 
 ## Contributing
@@ -61,6 +83,7 @@ describing it. If you have the time and want to contribute, that is even better!
 Submit some tests too :)
 
 Here is what I'm thinking might make sense to implement next:
+FP-Growth Algorithm.
 
 ## License
 MIT

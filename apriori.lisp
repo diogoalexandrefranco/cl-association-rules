@@ -82,7 +82,7 @@
 
       candidates)))
 
-(defun generate-rules (frequent-itemsets min-confidence test)
+(defun generate-rules (frequent-itemsets min-confidence num-transactions test)
   "From the frequent itemsets found by apriori,
   generate association rules for a given min-confidence."
   (labels ((subsets (set &optional (so-far nil) (output nil))
@@ -111,7 +111,7 @@
                     do (when (>= confidence min-confidence)
                         (push (make-rule :pretuple set-diff
                                          :posttuple subset
-                                         :support support
+                                         :support (/ support num-transactions)
                                          :confidence confidence)
                               mined-rules))))
 
@@ -127,8 +127,7 @@
    (2 3 8)
    (2 0)),
    where each line is a transaction.
-   Returns both the items (tuple, support)
-   as well as the rules ((pretuple, posttuple), confidence)."
+   Returns a list of the mined rules."
    (check-type support number "a number")
    (check-type confidence number "a number")
    (let* ((items (get-all-items dataset test))
@@ -147,4 +146,4 @@
            (multiple-value-setq (frequent-items non-frequent-items)
             (get-frequent-items candidates min-support dataset test frequent-itemsets)))
 
-      (generate-rules frequent-itemsets confidence test))))
+      (generate-rules frequent-itemsets confidence (length dataset) test))))
