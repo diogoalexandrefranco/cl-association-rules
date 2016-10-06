@@ -1,6 +1,6 @@
 # cl-association-rules
 This project aims to implement the most well known strategies and utilities when
-mining association rules. For now, only the apriori algorithm is implemented.
+mining association rules from a dataset of transactions. For now, only the apriori algorithm is implemented.
 It works at least on sbcl, ecl, ccl, abcl and clisp.
 
 * [How do i use it?](#how-do-i-use-it)
@@ -46,8 +46,7 @@ nickname "rules".
 ```
 
 ## API
-#### (apriori dataset &key (support 0.17)
-(confidence 0.68) (test #'equalp))
+#### (apriori dataset &key (support 0.17) (confidence 0.68) (test #'equalp))
 Apriori calculates the association rules in "dataset" using the [apriori
 algorithm](https://en.wikipedia.org/wiki/Apriori_algorithm). Expects a dataset of the form
   ((1 2 3 4)
@@ -66,15 +65,13 @@ algorithm](https://en.wikipedia.org/wiki/Apriori_algorithm). Expects a dataset o
                                          (1 3 4 11)
                                          (15 3 1 20))))
 *MINED-RULES* ;; ((2 1) => (3). Support is 1/3 and confidence is 1.
-                  (3 2) => (1). Support is 1/3 and confidence is 1.
-                  (1) => (3). Support is 2/3 and confidence is 4/5.
-                  (3) => (1). Support is 2/3 and confidence is 1.)
+              ;;  (3 2) => (1). Support is 1/3 and confidence is 1.
+              ;;  (1) => (3). Support is 2/3 and confidence is 4/5.
+              ;;  (3) => (1). Support is 2/3 and confidence is 1.)
 
 > (rules:rule-pretuple (first *MINED-RULES*))
 (2 1) ;; accessing member "pretuple" of the rule struct. Other members are
-"posttuple", "support" and "confidence".
-
-
+      ;; "posttuple", "support" and "confidence".
 ```
 
 ## Contributing
@@ -83,7 +80,7 @@ describing it. If you have the time and want to contribute, that is even better!
 Submit some tests too :)
 
 Here is what I'm thinking might make sense to implement next:
-FP-Growth Algorithm.
+* FP-Growth Algorithm.
 
 ## License
 MIT
