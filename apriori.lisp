@@ -1,7 +1,5 @@
 (in-package :cl-association-rules)
 
-(print "Project is running")
-
 (defun set-equal-p (set-1 set-2 test)
   "Returns t if two sets of elements are equal"
   (unless (= (length set-1) (length set-2))
@@ -102,19 +100,23 @@
                     (set-diff (rest total) subset test)
                     (cons (first total) (set-diff (rest total) subset test))))))
 
-    (maphash #'(lambda (itemset support)
-                (loop for subset in (subsets itemset)
-                      for set-diff = (set-diff itemset subset test)
-                      for confidence = (or
-                                        (ignore-errors
-                                          (/ support
-                                             (gethash set-diff frequent-itemsets)))
-                                        0)
-                  do (when (>= confidence min-confidence)
-                      (format t "rule found: ~a => ~a. Support is ~a and confidence is ~a.~%"
-                        set-diff subset support confidence))))
+    (let ((mined-rules))
+      (maphash #'(lambda (itemset support)
+                  (loop for subset in (subsets itemset)
+                        for set-diff = (set-diff itemset subset test)
+                        for confidence = (if set-diff
+                                             (/ support
+                                                (gethash set-diff frequent-itemsets))
+                                             0)
+                    do (when (>= confidence min-confidence)
+                        (push (make-rule :pretuple set-diff
+                                         :posttuple subset
+                                         :support support
+                                         :confidence confidence)
+                              mined-rules))))
 
-      frequent-itemsets)))
+        frequent-itemsets)
+      mined-rules)))
 
 (defun apriori (dataset &key (support 0.17) (confidence 0.68) (test #'equalp))
   "Calculates the association rules in the dataset using the apriori
@@ -127,8 +129,8 @@
    where each line is a transaction.
    Returns both the items (tuple, support)
    as well as the rules ((pretuple, posttuple), confidence)."
-   (check-type support number "A number")
-   (check-type confidence number "A number")
+   (check-type support number "a number")
+   (check-type confidence number "a number")
    (let* ((items (get-all-items dataset test))
           (min-support (ceiling (* (length dataset) support)))
           (frequent-itemsets (make-hash-table :test #'equalp)))
