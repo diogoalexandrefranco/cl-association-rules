@@ -104,9 +104,9 @@
       (maphash #'(lambda (itemset support)
                   (loop for subset in (subsets itemset)
                         for set-diff = (set-diff itemset subset test)
-                        for confidence = (if set-diff
-                                             (/ support
-                                                (gethash set-diff frequent-itemsets))
+                        for confidence = (or (ignore-errors
+                                              (/ support
+                                                 (gethash set-diff frequent-itemsets)))
                                              0)
                     do (when (>= confidence min-confidence)
                         (push (make-rule :pretuple set-diff
@@ -135,7 +135,6 @@
           (min-support (ceiling (* (length dataset) support)))
           (frequent-itemsets (make-hash-table :test #'equalp)))
 
-    (format t "min support: ~a~%" min-support)
     (multiple-value-bind (frequent-items non-frequent-items)
       (get-frequent-items items min-support dataset test frequent-itemsets)
 
