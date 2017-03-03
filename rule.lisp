@@ -16,8 +16,8 @@
                   (format stream "~a => ~a. Support is ~a and confidence is ~a."
                           (rule-pretuple struct)
                           (rule-posttuple struct)
-                          (rule-support struct)
-                          (rule-confidence struct))
+                          (float (rule-support struct))
+                          (float (rule-confidence struct)))
                   (format stream "New empty rule.~%")))))
 
   pretuple posttuple support confidence)
